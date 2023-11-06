@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const e = require('express');
 const port = process.env.PORT || 2003;
 
 //middleware
@@ -29,6 +30,7 @@ async function run() {
 
         // const foodCollection = client.db('foodDB').collection('featurefoodcollection');
         const foodCollection = client.db('foodDB').collection('foodcollection');
+        const requestedFoodCollection = client.db('foodDB').collection('requestedfoodcollection')
 
         //featured food api
         app.get('/featurefoods', async (req, res) => {
@@ -44,7 +46,15 @@ async function run() {
         })
         //all available foods api
         app.get('/foods', async(req, res)=>{
-            const cursor = foodCollection.find();
+            let query = {};
+            const searchQuery = req.query.food_name;
+            if(searchQuery){
+                query = { food_name: { $regex: `^${searchQuery}`, $options: 'i'}};
+            //    query.food_name = req.query.food_name;
+            }else{
+                query = {};
+            }
+            const cursor = foodCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
         })
@@ -54,6 +64,13 @@ async function run() {
             const query = {_id : new ObjectId(id)}
             const result = await foodCollection.findOne(query);
             res.send(result)
+        })
+        app.get('/foods/manage/:id')
+        //requested food api
+        app.post('/requestedfood', async(req, res)=>{
+            const requestedFood = req.body;
+            const result = await requestedFoodCollection.insertOne(requestedFood);
+            res.send(result);
         })
 
         // Send a ping to confirm a successful connection

@@ -65,7 +65,37 @@ async function run() {
             const result = await foodCollection.findOne(query);
             res.send(result)
         })
-        app.get('/foods/manage/:id')
+        //manageuserfood api
+        app.get('/manageuserfood',async(req,res)=>{ 
+            const email = req.query.email;
+            let query = {};
+            if(email){
+                query = {donator_email : email};
+            }
+            const result = await foodCollection.find(query).toArray();
+            // console.log(result)
+            res.send(result) 
+        })
+        //updatefoodapi
+        app.put('/manageuserfood', async(req,res)=>{
+            const email = req.query.email;
+            const filter = {donator_email : email};
+            const oldFoodDetails = req.body;
+            const options = {upsert: true};
+            const updatedFoodDetails = {
+                $set: {
+                    food_name: oldFoodDetails.food_name,
+                    food_image: oldFoodDetails.food_image,
+                    donator: oldFoodDetails.donator,
+                    donator_email: oldFoodDetails.donator_email,
+                    pickup_location: oldFoodDetails.pickup_location,
+                    expire_date: oldFoodDetails.expire_date,
+                    additional_notes: oldFoodDetails.additional_notes
+                }
+            } 
+            const result = await foodCollection.updateOne(filter, updatedFoodDetails ,options)
+            res.send(result)
+        })
         //requested food api
         app.post('/requestedfood', async(req, res)=>{
             const requestedFood = req.body;

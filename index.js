@@ -96,6 +96,13 @@ async function run() {
             const result = await foodCollection.updateOne(filter, updatedFoodDetails ,options)
             res.send(result)
         })
+        //delete food
+        app.delete('/manageuserfood', async(req,res)=>{
+            const email = req.query.email;
+            const query = {donator_email : email};
+            const result = await foodCollection.deleteOne(query);
+            res.send(result)
+        })
         //requested food api
         app.post('/requestedfood', async(req, res)=>{
             const requestedFood = req.body;

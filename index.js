@@ -1,5 +1,6 @@
 const express = require('express');
 require('dotenv').config();
+const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const app = express();
@@ -9,14 +10,16 @@ const port = process.env.PORT || 2003;
 //middleware
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors());
 // // middleware
-const cors = require('cors');
+
 const corsOptions = {
-    origin: ['https://community-food-sharing-7180e.web.app/'],
+    origin: 'https://community-food-sharing-7180e.web.app',
     credentials: true,            //access-control-allow-credentials:true
     optionSuccessStatus: 200
 }
-app.use(cors(corsOptions));
+
+
 
 const verifyToken = (req, res, next) => {
     const { token } = req?.cookies?.token;

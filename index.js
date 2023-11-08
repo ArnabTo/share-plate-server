@@ -34,24 +34,24 @@ async function run() {
 
         //featured food api
         app.get('/featurefoods', async (req, res) => {
-            const cursor = foodCollection.find().sort({quantity : -1}).limit(6);
-             const result = await cursor.toArray();
+            const cursor = foodCollection.find().sort({ quantity: -1 }).limit(6);
+            const result = await cursor.toArray();
             res.send(result);
         })
         //add foods
-        app.post('/foods', async(req,res)=>{
+        app.post('/foods', async (req, res) => {
             const newFood = req.body;
             const result = await foodCollection.insertOne(newFood);
             res.send(result);
         })
         //all available foods api
-        app.get('/foods', async(req, res)=>{
+        app.get('/foods', async (req, res) => {
             let query = {};
             const searchQuery = req.query.food_name;
-            if(searchQuery){
-                query = { food_name: { $regex: `^${searchQuery}`, $options: 'i'}};
-            //    query.food_name = req.query.food_name;
-            }else{
+            if (searchQuery) {
+                query = { food_name: { $regex: `^${searchQuery}`, $options: 'i' } };
+                //    query.food_name = req.query.food_name;
+            } else {
                 query = {};
             }
             const cursor = foodCollection.find(query);
@@ -59,29 +59,29 @@ async function run() {
             res.send(result);
         })
         //get any food detais api
-        app.get('/foods/:id', async(req,res)=>{
+        app.get('/foods/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id : new ObjectId(id)}
+            const query = { _id: new ObjectId(id) }
             const result = await foodCollection.findOne(query);
             res.send(result)
         })
         //manageuserfood api
-        app.get('/manageuserfood',async(req,res)=>{ 
+        app.get('/manageuserfood', async (req, res) => {
             const email = req.query.email;
             let query = {};
-            if(email){
-                query = {donator_email : email};
+            if (email) {
+                query = { donator_email: email };
             }
             const result = await foodCollection.find(query).toArray();
             // console.log(result)
-            res.send(result) 
+            res.send(result)
         })
         //updatefoodapi
-        app.put('/manageuserfood', async(req,res)=>{
+        app.put('/manageuserfood', async (req, res) => {
             const email = req.query.email;
-            const filter = {donator_email : email};
+            const filter = { donator_email: email };
             const oldFoodDetails = req.body;
-            const options = {upsert: true};
+            const options = { upsert: true };
             const updatedFoodDetails = {
                 $set: {
                     food_name: oldFoodDetails.food_name,
@@ -92,23 +92,48 @@ async function run() {
                     expire_date: oldFoodDetails.expire_date,
                     additional_notes: oldFoodDetails.additional_notes
                 }
-            } 
-            const result = await foodCollection.updateOne(filter, updatedFoodDetails ,options)
+            }
+            const result = await foodCollection.updateOne(filter, updatedFoodDetails, options)
             res.send(result)
         })
         //delete food
-        app.delete('/manageuserfood', async(req,res)=>{
+        app.delete('/manageuserfood', async (req, res) => {
             const email = req.query.email;
-            const query = {donator_email : email};
+            const query = { donator_email: email };
             const result = await foodCollection.deleteOne(query);
             res.send(result)
         })
         //requested food api
-        app.post('/requestedfood', async(req, res)=>{
+        app.post('/requestedfood', async (req, res) => {
             const requestedFood = req.body;
             const result = await requestedFoodCollection.insertOne(requestedFood);
             res.send(result);
         })
+        //get requested food data 
+        app.get('/requestedfood', async (req, res) => {
+            const cursor = requestedFoodCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+        app.get('/requestedfood/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await requestedFoodCollection.findOne(query);
+            res.send(result)
+        })
+        app.get('/singlerequestedfood/:email', async (req, res) => {
+            const uerEmail = req.params.email;
+            const query = { user_email : req.params.email }
+            const result = await requestedFoodCollection.findOne(query);
+            res.send(result)
+        })
+   
+        // app.get('/requestedfood', async(req,res)=>{
+        //     const donatorEmail = req.query.email;
+        //     const query = { donator_email : donatorEmail }
+        //     const result = await requestedFoodCollection.findOne(query);
+        //     res.send(result)
+        // })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });

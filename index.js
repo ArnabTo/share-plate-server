@@ -14,8 +14,8 @@ app.use(cors());
 // // middleware
 
 const corsOptions = {
-    origin: 'https://community-food-sharing-7180e.web.app',
-    credentials: true,            //access-control-allow-credentials:true
+    origin: ['https://community-food-sharing-7180e.web.app', 'https://arsdev-food-share.netlify.app'],
+    credentials: true,            
     optionSuccessStatus: 200
 }
 
@@ -69,30 +69,29 @@ async function run() {
             res.send({ token })
         })
         //featured food api
-        app.get('/featurefoods', async (req, res) => {
-            const cursor = foodCollection.find().sort({ quantity: -1 }).limit(6);
+        app.get('/featuredfood', async (req, res) => {
+            const query = {status : 'available'}
+            const cursor = foodCollection.find(query).sort({ quantity: -1 }).limit(6);
             const result = await cursor.toArray();
             res.send(result);
         })
         //add foods
-        app.post('/foods', verifyToken, async (req, res) => {
+        app.post('/foods', async (req, res) => {
             const newFood = req.body;
             const result = await foodCollection.insertOne(newFood);
             res.send(result);
         })
         //all available foods api
-        app.get('/foods', async (req, res) => {
-            let query = {};
-            const searchQuery = req.query.food_name;
-            if (searchQuery) {
-                query = { food_name: { $regex: `^${searchQuery}`, $options: 'i' } };
-                //    query.food_name = req.query.food_name;
-            } else {
-                query = {};
+        app.get('/foods', async(req, res)=>{
+            const query = {$and : []};
+            query.$and.push({ status : 'available' })
+
+            const searchQuery = req.body.food_name;
+            if(searchQuery){
+                query.$and.push({food_name : {$regex: `^${searchQuery}`, $options : 'i'}});
             }
-            const cursor = foodCollection.find(query);
-            const result = await cursor.toArray();
-            res.send(result);
+            const result = await foodCollection.find(query).toArray();
+            res.send(result)
         })
         //get any food detais api
         app.get('/foods/:id', async (req, res) => {
@@ -101,7 +100,20 @@ async function run() {
             const result = await foodCollection.findOne(query);
             res.send(result)
         })
-
+        //update food 
+        app.put('/updatefoodstatus/:id', async(req, res)=>{
+            const id = req.params.id;
+            const filter = { _id : new ObjectId(id)}
+            const updateStatus = req.body;
+            const options = { upsert : true }
+            const updatedDetails = {
+              $set:{
+                status : updateStatus.status
+              }
+            }
+            const result = await foodCollection.updateOne(filter, updatedDetails, options)
+            res.send(result)
+        })
         //manageuserfood api
         app.get('/manageuserfood', async (req, res) => {
             const email = req.query.email;
@@ -114,7 +126,7 @@ async function run() {
             res.send(result)
         })
         //updatefoodapi
-        app.put('/manageuserfood', verifyToken, async (req, res) => {
+        app.put('/manageuserfood', async (req, res) => {
             const email = req.query.email;
             const filter = { donator_email: email };
             const oldFoodDetails = req.body;
@@ -134,7 +146,7 @@ async function run() {
             res.send(result)
         })
         //delete food
-        app.delete('/manageuserfood', verifyToken, async (req, res) => {
+        app.delete('/manageuserfood', async (req, res) => {
             const email = req.query.email;
             const query = { donator_email: email };
             const result = await foodCollection.deleteOne(query);
